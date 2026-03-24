@@ -22,11 +22,21 @@ Model Context Protocol server for Oracle Database over **Streamable HTTP** (Expr
 
 ## Run the server
 
+**Production-style** (compile then run):
+
 ```bash
 cd oracle-mcp
 npm install
 npm run build
 npm start
+```
+
+**Development** (TypeScript directly, restarts on `src/**/*.ts` changes — no `build`):
+
+```bash
+cd oracle-mcp
+npm install
+npm run dev
 ```
 
 Logs show the listen URL, MCP path, and `/ready` hint.
@@ -95,4 +105,5 @@ If the server fails to start, check terminal output, then **`/ready`** and **`/h
 | Script        | Description              |
 |---------------|--------------------------|
 | `npm run build` | Compile TypeScript to `dist/` |
-| `npm start`     | Run the HTTP server      |
+| `npm start`     | Run the HTTP server (`dist/`) |
+| `npm run dev`   | Run `src/index.ts` with hot reload (process restart on save) |
