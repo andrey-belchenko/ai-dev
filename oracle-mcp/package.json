@@ -1,7 +1,7 @@
 {
   "name": "oracle-mcp",
   "version": "1.0.0",
-  "description": "MCP server for Oracle Database (Cursor / stdio)",
+  "description": "MCP server for Oracle Database (HTTP / Streamable MCP)",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
@@ -13,10 +13,12 @@
   "license": "ISC",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
+    "express": "^5.2.1",
     "oracledb": "^6.10.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/express": "^5.0.0",
     "@types/node": "^25.5.0",
     "@types/oracledb": "^6.10.2",
     "typescript": "^6.0.2"

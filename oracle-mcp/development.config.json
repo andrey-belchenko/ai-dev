@@ -42,6 +42,11 @@
 
     "oracle": {
         "libDir": "C:\\oracle\\instantclient_11_2",
+        "mcpHttp": {
+            "host": "127.0.0.1",
+            "port": 3111,
+            "path": "/mcp"
+        },
         "connection": {
             "user": "asuse",
             "password": "kl0pik",

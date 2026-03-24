@@ -4,19 +4,19 @@ overview: Replace stdio MCP with a stateless Streamable HTTP server using Expres
 todos:
   - id: config-mcp-http
     content: Extend config.ts + types for oracle.mcpHttp (host, port, path) with defaults
-    status: pending
+    status: completed
   - id: extract-tools
     content: Add src/tools.ts with registerOracleTools(server, pool, mcpCfg); slim index imports
-    status: pending
+    status: completed
   - id: http-entry
     content: Replace stdio in index.ts with Express + stateless StreamableHTTPServerTransport + /ready (DB probe) + optional /health + listen + pool shutdown
-    status: pending
+    status: completed
   - id: deps
     content: Add express and @types/express to package.json
-    status: pending
+    status: completed
   - id: readme-http
     content: "Rewrite README: run, curl /ready (DB), optional /health, Cursor streamableHttp URL, verify tools in Cursor"
-    status: pending
+    status: completed
 isProject: false
 ---
 

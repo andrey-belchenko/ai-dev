@@ -1,84 +1,98 @@
 # oracle-mcp
 
-Model Context Protocol (stdio) server for Oracle Database. Use it from [Cursor](https://cursor.com) to run SQL and inspect schema via tools: `execute_sql`, `list_tables`, `describe_table`.
+Model Context Protocol server for Oracle Database over **Streamable HTTP** (Express). Use it from [Cursor](https://cursor.com) to run SQL and inspect schema via tools: `execute_sql`, `list_tables`, `describe_table`.
 
 ## Prerequisites
 
 - Node.js 18+
-- Oracle Instant Client on the machine (thick mode), unless you rely on the driver’s thin mode and your network/DB version supports it.
-- Build once: `npm install` and `npm run build`.
-- **`development.config.json`** in the `oracle-mcp` folder (next to `package.json`) with an `oracle` section (see below).
+- Oracle Instant Client if you use `oracle.libDir` (thick mode)
+- [`development.config.json`](development.config.json) in the **oracle-mcp** directory with `oracle.connection` and optional `oracle.mcpHttp`
 
-## Configuration (`development.config.json`)
+## Configuration
 
-Place [`development.config.json`](development.config.json) in the **oracle-mcp** package directory. The server reads **`oracle.libDir`**, **`oracle.connection`**, and optional **`oracle.maxRows`**.
+### `development.config.json`
 
-Example `oracle` block:
+- **`oracle.connection`** — `user`, `password`, `connectString` (or `connectString1`), optional pool fields
+- **`oracle.libDir`** — Instant Client directory (optional)
+- **`oracle.maxRows`** — default row cap for tools (optional, default `10000`)
+- **`oracle.mcpHttp`** (optional) — HTTP listen options:
+  - **`host`** — default `127.0.0.1` (use `0.0.0.0` only on trusted networks; see security below)
+  - **`port`** — default `3111`
+  - **`path`** — MCP endpoint path, default `/mcp` (with or without leading `/`)
 
-```json
-{
-  "oracle": {
-    "libDir": "C:\\oracle\\instantclient_11_2",
-    "maxRows": 10000,
-    "connection": {
-      "user": "your_user",
-      "password": "your_password",
-      "connectString": "(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=host)(PORT=1521))(CONNECT_DATA=(SID=your_sid)))",
-      "poolMin": 2,
-      "poolMax": 10,
-      "poolIncrement": 1,
-      "poolTimeout": 60
-    }
-  }
-}
+## Run the server
+
+```bash
+cd oracle-mcp
+npm install
+npm run build
+npm start
 ```
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `oracle.connection.user` | yes | Database user |
-| `oracle.connection.password` | yes | Password |
-| `oracle.connection.connectString` | yes* | TNS-style or Easy Connect string |
-| `oracle.connection.connectString1` | yes* | Alternative name; used if `connectString` is omitted |
-| `oracle.libDir` | no | Instant Client directory; if set, thick mode is enabled |
-| `oracle.connection.poolMin` / `poolMax` / `poolIncrement` / `poolTimeout` | no | Defaults: 2, 10, 1, 60 (seconds) |
-| `oracle.maxRows` | no | Default row cap for tools when `maxRows` is omitted on `execute_sql`; default `10000` |
+Logs show the listen URL, MCP path, and `/ready` hint.
 
-## Cursor MCP configuration
+Stop with **Ctrl+C** (pool and HTTP server are closed).
 
-After `npm run build`, point Cursor at the compiled entry. No Oracle-related environment variables are required if `development.config.json` is in place.
+## Verify the server
+
+### 1. Process only (no database)
+
+```bash
+curl -s http://127.0.0.1:3111/health
+```
+
+Expect: `{"ok":true}` (adjust host/port if you changed `oracle.mcpHttp`).
+
+### 2. Database (same path as MCP `execute_sql`)
+
+Uses the shared connection pool and `executeStatement` with `SELECT * FROM dual`:
+
+```bash
+curl -s -i http://127.0.0.1:3111/ready
+```
+
+- **200** — `ok`, `query`, `rowCount`, `rows` (JSON-safe)
+- **503** — `ok: false`, `error` (Oracle/network/config issue)
+
+This is not the MCP wire format; it proves Oracle is reachable the same way tools do. Full MCP is validated in Cursor (below).
+
+## Configure Cursor
+
+1. **Start** `oracle-mcp` (`npm start`) before using MCP in Cursor.
+2. Open **Cursor Settings → MCP** (or edit **`.cursor/mcp.json`** in the project or user config).
+3. Add a **Streamable HTTP** (or URL-based) server pointing at your MCP endpoint, for example:
 
 ```json
 {
   "mcpServers": {
     "oracle-dev": {
-      "command": "node",
-      "args": ["C:/Repos/github/ai-dev/oracle-mcp/dist/index.js"],
-      "cwd": "C:/Repos/github/ai-dev/oracle-mcp"
+      "type": "streamableHttp",
+      "url": "http://127.0.0.1:3111/mcp"
     }
   }
 }
 ```
 
-`cwd` is optional if the config file path is resolved from the server’s location (`dist/` → parent folder); the server resolves `development.config.json` relative to the **package root** (directory containing `dist/`), not the process `cwd`. So you can omit `cwd` when `args` uses an absolute path to `dist/index.js`.
+If your Cursor version uses a different shape (e.g. only `url` without `type`), use the UI or docs for that build. **No auth** in this setup — omit `headers`.
 
-Restart Cursor (or reload MCP) after changes.
+4. **Restart Cursor** (or reload MCP) after changing config.
 
-## Tools
+## Verify MCP in Cursor
 
-- **`execute_sql`** — One statement per call; optional `binds` (object for named binds or array for positional) and optional `maxRows` for queries.
-- **`list_tables`** — Queries `ALL_TABLES` with optional `owner` and `table_name_pattern` (`%` / `_` wildcards).
-- **`describe_table`** — Column list from `ALL_TAB_COLUMNS` and PK columns from `ALL_CONSTRAINTS` / `ALL_CONS_COLUMNS`.
+1. MCP panel: server **connected**, tools listed: **`execute_sql`**, **`list_tables`**, **`describe_table`**.
+2. In **Agent** mode (tools enabled), ask explicitly, e.g.:  
+   *Using the Oracle MCP `execute_sql` tool, run `SELECT * FROM dual`.*
+
+If the server fails to start, check terminal output, then **`/ready`** and **`/health`**.
+
+## Security
+
+- **No authentication** — dev-only.
+- Binding **`0.0.0.0`** exposes the service on all interfaces; the SDK may log a DNS-rebinding warning. Prefer **`127.0.0.1`** or use a reverse proxy + TLS + auth for anything beyond local dev.
 
 ## Scripts
 
-- `npm run build` — Compile TypeScript to `dist/`
-- `npm start` — Run the server on stdio (normally started by Cursor, not manually for interactive use)
-
-## Manual sanity check
-
-```bash
-cd oracle-mcp
-npm start
-```
-
-The process waits on stdin; that is expected. Stop with Ctrl+C. Prefer validating from Cursor’s MCP panel once configured.
+| Script        | Description              |
+|---------------|--------------------------|
+| `npm run build` | Compile TypeScript to `dist/` |
+| `npm start`     | Run the HTTP server      |

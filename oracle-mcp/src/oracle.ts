@@ -54,3 +54,12 @@ export async function executeStatement(
     await conn.close();
   }
 }
+
+const PROBE_SQL = "SELECT * FROM dual";
+
+/** Same pool and execute path as MCP `execute_sql`; use for HTTP `/ready`. */
+export async function probeOracleDb(
+  pool: oracledb.Pool
+): Promise<ExecuteOutcome> {
+  return executeStatement(pool, PROBE_SQL, {}, 1);
+}
