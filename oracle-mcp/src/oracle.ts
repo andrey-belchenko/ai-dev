@@ -1,5 +1,5 @@
 import oracledb from "oracledb";
-import type { OracleEnvConfig } from "./config.js";
+import type { OracleMcpConfig } from "./config.js";
 
 let thickInitialized = false;
 
@@ -9,7 +9,7 @@ export function initThickMode(libDir: string): void {
   thickInitialized = true;
 }
 
-export async function createPool(cfg: OracleEnvConfig): Promise<oracledb.Pool> {
+export async function createPool(cfg: OracleMcpConfig): Promise<oracledb.Pool> {
   if (cfg.libDir) {
     initThickMode(cfg.libDir);
   }

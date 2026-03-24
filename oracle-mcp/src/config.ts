@@ -1,22 +1,10 @@
-function requireEnv(name: string): string {
-  const v = process.env[name];
-  if (v === undefined || v === "") {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
-  return v;
-}
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-function parseIntEnv(name: string, defaultValue: number): number {
-  const raw = process.env[name];
-  if (raw === undefined || raw === "") return defaultValue;
-  const n = Number.parseInt(raw, 10);
-  if (Number.isNaN(n)) {
-    throw new Error(`Invalid integer for ${name}: ${raw}`);
-  }
-  return n;
-}
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
-export type OracleEnvConfig = {
+export type OracleMcpConfig = {
   user: string;
   password: string;
   connectString: string;
@@ -28,16 +16,65 @@ export type OracleEnvConfig = {
   defaultMaxRows: number;
 };
 
-export function loadOracleEnvConfig(): OracleEnvConfig {
+type DevConfigJson = {
+  oracle?: {
+    libDir?: string;
+    maxRows?: number;
+    connection?: {
+      user?: string;
+      password?: string;
+      connectString?: string;
+      connectString1?: string;
+      poolMin?: number;
+      poolMax?: number;
+      poolIncrement?: number;
+      poolTimeout?: number;
+    };
+  };
+};
+
+/** `development.config.json` next to the package root (sibling of `dist/`). */
+export function defaultDevelopmentConfigPath(): string {
+  return join(__dirname, "..", "development.config.json");
+}
+
+export function loadOracleMcpConfig(
+  configPath: string = defaultDevelopmentConfigPath()
+): OracleMcpConfig {
+  const resolved = resolve(configPath);
+  if (!existsSync(resolved)) {
+    throw new Error(
+      `Config file not found: ${resolved}. Create oracle-mcp/development.config.json with an "oracle" section.`
+    );
+  }
+  let raw: unknown;
+  try {
+    raw = JSON.parse(readFileSync(resolved, "utf8"));
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    throw new Error(`Invalid JSON in ${resolved}: ${msg}`);
+  }
+  const oracle = (raw as DevConfigJson).oracle;
+  if (!oracle?.connection) {
+    throw new Error(`Missing "oracle.connection" in ${resolved}`);
+  }
+  const c = oracle.connection;
+  const connectString = c.connectString ?? c.connectString1;
+  if (!c.user || !c.password || !connectString) {
+    throw new Error(
+      `oracle.connection must include user, password, and connectString (or connectString1) in ${resolved}`
+    );
+  }
+  const libDir = oracle.libDir?.trim() || undefined;
   return {
-    user: requireEnv("ORACLE_USER"),
-    password: requireEnv("ORACLE_PASSWORD"),
-    connectString: requireEnv("ORACLE_CONNECT_STRING"),
-    libDir: process.env.ORACLE_CLIENT_LIB_DIR?.trim() || undefined,
-    poolMin: parseIntEnv("ORACLE_POOL_MIN", 2),
-    poolMax: parseIntEnv("ORACLE_POOL_MAX", 10),
-    poolIncrement: parseIntEnv("ORACLE_POOL_INCREMENT", 1),
-    poolTimeout: parseIntEnv("ORACLE_POOL_TIMEOUT", 60),
-    defaultMaxRows: parseIntEnv("ORACLE_MAX_ROWS", 10_000),
+    user: c.user,
+    password: c.password,
+    connectString,
+    libDir,
+    poolMin: c.poolMin ?? 2,
+    poolMax: c.poolMax ?? 10,
+    poolIncrement: c.poolIncrement ?? 1,
+    poolTimeout: c.poolTimeout ?? 60,
+    defaultMaxRows: oracle.maxRows ?? 10_000,
   };
 }

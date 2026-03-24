@@ -42,20 +42,10 @@
 
     "oracle": {
         "libDir": "C:\\oracle\\instantclient_11_2",
-        "connection1": {
-            "user": "asuse",
-            "password": "m0l0k0",
-            "connectString": "(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=b4pt.rgmek.local)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=orcl)))",
-            "poolMin": 2,
-            "poolMax": 10,
-            "poolIncrement": 1,
-            "poolTimeout": 60
-        },
         "connection": {
             "user": "asuse",
             "password": "kl0pik",
-            "connectString": "(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=ryazan-ora.infoenergo.loc)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=realryaz)))",
-            "connectString1": "(DESCRIPTION = (ADDRESS = (PROTOCOL = TCP)(HOST = kaz-realkaz.infoenergo.loc)(PORT = 1521)) (CONNECT_DATA = (SID = realkazn) (server = dedicated) ) )",
+            "connectString": "(DESCRIPTION = (ADDRESS = (PROTOCOL = TCP)(HOST = kaz-realkaz.infoenergo.loc)(PORT = 1521)) (CONNECT_DATA = (SID = realkazn) (server = dedicated) ) )",
             "poolMin": 2,
             "poolMax": 10,
             "poolIncrement": 1,

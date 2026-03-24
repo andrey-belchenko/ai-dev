@@ -7,24 +7,45 @@ Model Context Protocol (stdio) server for Oracle Database. Use it from [Cursor](
 - Node.js 18+
 - Oracle Instant Client on the machine (thick mode), unless you rely on the driver’s thin mode and your network/DB version supports it.
 - Build once: `npm install` and `npm run build`.
+- **`development.config.json`** in the `oracle-mcp` folder (next to `package.json`) with an `oracle` section (see below).
 
-## Environment variables
+## Configuration (`development.config.json`)
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `ORACLE_USER` | yes | Database user |
-| `ORACLE_PASSWORD` | yes | Password |
-| `ORACLE_CONNECT_STRING` | yes | Connect descriptor or Easy Connect string (single line in JSON env is easiest) |
-| `ORACLE_CLIENT_LIB_DIR` | no | Instant Client directory; if set, thick mode is enabled via `initOracleClient` |
-| `ORACLE_POOL_MIN` | no | Default `2` |
-| `ORACLE_POOL_MAX` | no | Default `10` |
-| `ORACLE_POOL_INCREMENT` | no | Default `1` |
-| `ORACLE_POOL_TIMEOUT` | no | Pool timeout in seconds, default `60` |
-| `ORACLE_MAX_ROWS` | no | Default row cap for `execute_sql` / listing tools when `maxRows` is omitted, default `10000` |
+Place [`development.config.json`](development.config.json) in the **oracle-mcp** package directory. The server reads **`oracle.libDir`**, **`oracle.connection`**, and optional **`oracle.maxRows`**.
+
+Example `oracle` block:
+
+```json
+{
+  "oracle": {
+    "libDir": "C:\\oracle\\instantclient_11_2",
+    "maxRows": 10000,
+    "connection": {
+      "user": "your_user",
+      "password": "your_password",
+      "connectString": "(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=host)(PORT=1521))(CONNECT_DATA=(SID=your_sid)))",
+      "poolMin": 2,
+      "poolMax": 10,
+      "poolIncrement": 1,
+      "poolTimeout": 60
+    }
+  }
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `oracle.connection.user` | yes | Database user |
+| `oracle.connection.password` | yes | Password |
+| `oracle.connection.connectString` | yes* | TNS-style or Easy Connect string |
+| `oracle.connection.connectString1` | yes* | Alternative name; used if `connectString` is omitted |
+| `oracle.libDir` | no | Instant Client directory; if set, thick mode is enabled |
+| `oracle.connection.poolMin` / `poolMax` / `poolIncrement` / `poolTimeout` | no | Defaults: 2, 10, 1, 60 (seconds) |
+| `oracle.maxRows` | no | Default row cap for tools when `maxRows` is omitted on `execute_sql`; default `10000` |
 
 ## Cursor MCP configuration
 
-After `npm run build`, add a server (user-level or project `.cursor/mcp.json`). Example:
+After `npm run build`, point Cursor at the compiled entry. No Oracle-related environment variables are required if `development.config.json` is in place.
 
 ```json
 {
@@ -32,20 +53,13 @@ After `npm run build`, add a server (user-level or project `.cursor/mcp.json`). 
     "oracle-dev": {
       "command": "node",
       "args": ["C:/Repos/github/ai-dev/oracle-mcp/dist/index.js"],
-      "env": {
-        "ORACLE_USER": "your_user",
-        "ORACLE_PASSWORD": "your_password",
-        "ORACLE_CONNECT_STRING": "(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=your-host)(PORT=1521))(CONNECT_DATA=(SID=your_sid)))",
-        "ORACLE_CLIENT_LIB_DIR": "C:\\oracle\\instantclient_11_2",
-        "ORACLE_POOL_MAX": "10",
-        "ORACLE_MAX_ROWS": "10000"
-      }
+      "cwd": "C:/Repos/github/ai-dev/oracle-mcp"
     }
   }
 }
 ```
 
-Use forward slashes in `args` paths when possible. Escape backslashes in JSON for Windows paths under `env`.
+`cwd` is optional if the config file path is resolved from the server’s location (`dist/` → parent folder); the server resolves `development.config.json` relative to the **package root** (directory containing `dist/`), not the process `cwd`. So you can omit `cwd` when `args` uses an absolute path to `dist/index.js`.
 
 Restart Cursor (or reload MCP) after changes.
 
@@ -62,9 +76,8 @@ Restart Cursor (or reload MCP) after changes.
 
 ## Manual sanity check
 
-With env vars set in the shell:
-
 ```bash
+cd oracle-mcp
 npm start
 ```
 

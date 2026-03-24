@@ -2,7 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import type oracledb from "oracledb";
-import { loadOracleEnvConfig } from "./config.js";
+import { loadOracleMcpConfig } from "./config.js";
 import { createPool, executeStatement } from "./oracle.js";
 
 function formatOracleError(err: unknown): string {
@@ -35,8 +35,8 @@ function stringifyPayload(data: unknown): string {
 }
 
 async function main(): Promise<void> {
-  const envCfg = loadOracleEnvConfig();
-  const pool = await createPool(envCfg);
+  const mcpCfg = loadOracleMcpConfig();
+  const pool = await createPool(mcpCfg);
 
   const server = new McpServer({ name: "oracle-mcp", version: "1.0.0" });
 
@@ -55,7 +55,7 @@ async function main(): Promise<void> {
     },
     async ({ sql, binds, maxRows }) => {
       try {
-        const limit = maxRows ?? envCfg.defaultMaxRows;
+        const limit = maxRows ?? mcpCfg.defaultMaxRows;
         const out = await executeStatement(
           pool,
           sql,
@@ -109,7 +109,7 @@ async function main(): Promise<void> {
           pool,
           sql,
           binds,
-          envCfg.defaultMaxRows
+          mcpCfg.defaultMaxRows
         );
         return {
           content: [{ type: "text", text: stringifyPayload(out.rows) }],
@@ -152,8 +152,8 @@ WHERE ac.owner = :owner
 ORDER BY acc.position`;
         const binds = { owner, table_name };
         const [cols, pks] = await Promise.all([
-          executeStatement(pool, colSql, binds, envCfg.defaultMaxRows),
-          executeStatement(pool, pkSql, binds, envCfg.defaultMaxRows),
+          executeStatement(pool, colSql, binds, mcpCfg.defaultMaxRows),
+          executeStatement(pool, pkSql, binds, mcpCfg.defaultMaxRows),
         ]);
         return {
           content: [
