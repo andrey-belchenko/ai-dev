@@ -1,0 +1,65 @@
+{
+    "url": "localhost",
+    "port": 3111,
+    "database": {
+        "host": "asusejs-dev.infoenergo.loc",
+        "port": "5432",
+        "name": "asuse",
+        "password": "kl0pik",
+        "user": "asuse",
+        "pool_max": 15
+    },
+    "mongo": {
+        "uri": "mongodb://root:TS6Q4KsA4NpnhAfY@asusejs-dev.infoenergo.loc:27017",
+        "uri1": "mongodb://localhost:27017",
+        "db": "reports_tmp"
+    },
+    "reports": {
+        "navigatorId": 10,
+        "reportsNet": {
+            "url1": "http://asuse-ai-dev.infoenergo.loc:3122",
+            "url": "http://localhost:5195",
+            "requestTimeoutMs": 3600000
+        }
+    },
+    "migrations": {
+        "devPrefix": "bav_dev_",
+        "target1": {
+            "host": "asuse-ai-main.infoenergo.loc",
+            "port": "5432",
+            "name": "asuse",
+            "password": "kl0pik",
+            "user": "webuser"
+        },
+        "target": {
+            "host": "asusejs-dev.infoenergo.loc",
+            "port": "5432",
+            "name": "asuse",
+            "password": "kl0pik",
+            "user": "asuse"
+        }
+    },
+
+    "oracle": {
+        "libDir": "C:\\oracle\\instantclient_11_2",
+        "connection1": {
+            "user": "asuse",
+            "password": "m0l0k0",
+            "connectString": "(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=b4pt.rgmek.local)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=orcl)))",
+            "poolMin": 2,
+            "poolMax": 10,
+            "poolIncrement": 1,
+            "poolTimeout": 60
+        },
+        "connection": {
+            "user": "asuse",
+            "password": "kl0pik",
+            "connectString": "(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=ryazan-ora.infoenergo.loc)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=realryaz)))",
+            "connectString1": "(DESCRIPTION = (ADDRESS = (PROTOCOL = TCP)(HOST = kaz-realkaz.infoenergo.loc)(PORT = 1521)) (CONNECT_DATA = (SID = realkazn) (server = dedicated) ) )",
+            "poolMin": 2,
+            "poolMax": 10,
+            "poolIncrement": 1,
+            "poolTimeout": 60
+        }
+    }
+}
