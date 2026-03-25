@@ -1,0 +1,34 @@
+CREATE OR REPLACE TRIGGER ASUSE.RT_PRESETOPTION_LOG
+AFTER INSERT OR UPDATE ON ASUSE.RR_PRESETOPTION
+FOR EACH ROW
+BEGIN
+    IF INSERTING THEN
+        INSERT INTO ASUSE.RR_PRESETOPTION_LOG (
+            KOD_POPTION, KOD_PRESET, VAL_N, VAL_S, VAL_D,
+            ORDNUM, DT, OPER, VAL_N1, VAL_S1,
+            VAL_D1, OPERNOT, OPEROR, VAL_SL, NUM
+        ) VALUES (
+            :NEW.KOD_POPTION, :NEW.KOD_PRESET, :NEW.VAL_N, :NEW.VAL_S, :NEW.VAL_D,
+            :NEW.ORDNUM, :NEW.DT, :NEW.OPER, :NEW.VAL_N1, :NEW.VAL_S1,
+            :NEW.VAL_D1, :NEW.OPERNOT, :NEW.OPEROR, :NEW.VAL_SL, :NEW.NUM
+        );
+    ELSIF UPDATING THEN
+        UPDATE ASUSE.RR_PRESETOPTION_LOG SET
+            VAL_N   = :NEW.VAL_N,
+            VAL_S   = :NEW.VAL_S,
+            VAL_D   = :NEW.VAL_D,
+            DT      = :NEW.DT,
+            OPER    = :NEW.OPER,
+            VAL_N1  = :NEW.VAL_N1,
+            VAL_S1  = :NEW.VAL_S1,
+            VAL_D1  = :NEW.VAL_D1,
+            OPERNOT = :NEW.OPERNOT,
+            OPEROR  = :NEW.OPEROR,
+            VAL_SL  = :NEW.VAL_SL,
+            NUM     = :NEW.NUM
+        WHERE KOD_PRESET  = :NEW.KOD_PRESET
+          AND KOD_POPTION = :NEW.KOD_POPTION
+          AND ORDNUM      = :NEW.ORDNUM;
+    END IF;
+END;
+/
