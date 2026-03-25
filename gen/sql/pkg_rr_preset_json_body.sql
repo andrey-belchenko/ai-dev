@@ -8,6 +8,9 @@ CREATE OR REPLACE PACKAGE BODY ASUSE.PKG_RR_PRESET_JSON AS
   TYPE t_path_set IS TABLE OF PLS_INTEGER INDEX BY VARCHAR2(20);
   g_path t_path_set;
 
+  g_cached_clob  CLOB;
+  g_chunk_size   PLS_INTEGER := 4000;
+
   ------------------------------------------------------------------------------
   FUNCTION json_escape(p_str IN VARCHAR2) RETURN VARCHAR2 IS
     c     VARCHAR2(1 CHAR);
@@ -586,6 +589,48 @@ CREATE OR REPLACE PACKAGE BODY ASUSE.PKG_RR_PRESET_JSON AS
     preset_json_impl(p_kod_preset, p_max_depth, l_clob);
     RETURN l_clob;
   END fn_preset_full_json;
+
+  ------------------------------------------------------------------------------
+  FUNCTION fn_preset_json_init(
+    p_kod_preset   IN NUMBER,
+    p_max_depth    IN PLS_INTEGER DEFAULT 10,
+    p_chunk_size   IN PLS_INTEGER DEFAULT 4000
+  ) RETURN PLS_INTEGER IS
+    l_len PLS_INTEGER;
+  BEGIN
+    IF g_cached_clob IS NOT NULL AND DBMS_LOB.ISTEMPORARY(g_cached_clob) = 1 THEN
+      DBMS_LOB.FREETEMPORARY(g_cached_clob);
+    END IF;
+    g_cached_clob := NULL;
+    g_chunk_size  := LEAST(GREATEST(NVL(p_chunk_size, 4000), 1), 4000);
+
+    g_cached_clob := fn_preset_full_json(p_kod_preset, p_max_depth);
+    IF g_cached_clob IS NULL THEN
+      RETURN 0;
+    END IF;
+    l_len := DBMS_LOB.GETLENGTH(g_cached_clob);
+    RETURN CEIL(l_len / g_chunk_size);
+  END fn_preset_json_init;
+
+  ------------------------------------------------------------------------------
+  FUNCTION fn_get_chunk(
+    p_chunk_no IN PLS_INTEGER
+  ) RETURN VARCHAR2 IS
+    l_off PLS_INTEGER;
+    l_amt PLS_INTEGER;
+    l_len PLS_INTEGER;
+  BEGIN
+    IF g_cached_clob IS NULL OR p_chunk_no IS NULL OR p_chunk_no < 1 THEN
+      RETURN NULL;
+    END IF;
+    l_len := DBMS_LOB.GETLENGTH(g_cached_clob);
+    l_off := (p_chunk_no - 1) * g_chunk_size + 1;
+    IF l_off > l_len THEN
+      RETURN NULL;
+    END IF;
+    l_amt := LEAST(g_chunk_size, l_len - l_off + 1);
+    RETURN DBMS_LOB.SUBSTR(g_cached_clob, l_amt, l_off);
+  END fn_get_chunk;
 
 END PKG_RR_PRESET_JSON;
 /

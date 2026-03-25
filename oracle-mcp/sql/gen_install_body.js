@@ -1,0 +1,10 @@
+const fs = require('fs');
+const path = require('path');
+const src = fs.readFileSync(path.join(__dirname, 'pkg_rr_preset_json.sql'), 'utf8');
+const i = src.indexOf('CREATE OR REPLACE PACKAGE BODY');
+if (i < 0) throw new Error('PACKAGE BODY not found');
+let body = src.slice(i).trim().replace(/\/\s*$/m, '').trim();
+if (body.includes('!')) throw new Error('Use different q-quote delimiter: ! found in body');
+const out = `BEGIN\nEXECUTE IMMEDIATE q'!${body}!';\nEND;`;
+fs.writeFileSync(path.join(__dirname, '_install_body.sql'), out, 'utf8');
+console.log('Wrote _install_body.sql, length', out.length);
