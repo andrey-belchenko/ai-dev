@@ -3,6 +3,21 @@
 **Preset:** `KOD_PRESET = 2000493109`  
 **Date:** 2026-03-25  
 
+## Task
+
+**Goal:** understand how report preset settings are physically stored in the Oracle DB so we can build a solution that extracts them into a convenient JSON with a human-readable structure.
+
+**Approach:**
+1. Take a known preset (`KOD_PRESET = 2000493109`) whose UI settings and resulting report output we already have (see `settings-info/` and `result/report.txt`).
+2. Query every related table referenced in `RR_PRESET_REFERENCE.md` for that preset.
+3. Map each DB row back to the corresponding UI setting to confirm correctness.
+4. Document the data model, patterns, and ready-to-use SQL queries for future extraction tooling.
+
+**Input artifacts:**
+- `gen/RR_PRESET_REFERENCE.md` — schema documentation (table structures, FKs, sample data)
+- `gen/report-example/settings-info/*.md` — UI settings captured from the application
+- `gen/report-example/result/report.txt` — actual report output generated with this preset
+
 ---
 
 ## 1. Executive Summary
