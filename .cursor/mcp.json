@@ -1,7 +1,6 @@
 {
   "mcpServers": {
     "oracle-dev": {
-      "type": "streamableHttp",
       "url": "http://127.0.0.1:3111/mcp"
     }
   }
