@@ -1,28 +1,38 @@
 # oracle-mcp
 
-Model Context Protocol server for Oracle Database over **Streamable HTTP** (Express). Use it from [Cursor](https://cursor.com) to run SQL and inspect schema via tools: `execute_sql`, `list_tables`, `describe_table`.
+MCP-сервер (Model Context Protocol) для Oracle Database поверх **Streamable HTTP** (Express). Используйте его из [Cursor](https://cursor.com) для выполнения SQL и исследования схемы через инструменты: `execute_sql`, `list_tables`, `describe_table`.
 
-## Prerequisites
+## Требования
 
 - Node.js 18+
-- Oracle Instant Client if you use `oracle.libDir` (thick mode)
-- [`development.config.json`](development.config.json) in the **oracle-mcp** directory with `oracle.connection` and optional `oracle.mcpHttp`
+- Oracle Instant Client, если используется `oracle.libDir` (thick-режим)
+- [`development.config.json`](development.config.json) в каталоге **oracle-mcp** с секциями `oracle` и (опционально) `mcpHttp`
 
-## Configuration
+## Конфигурация
 
 ### `development.config.json`
 
-- **`oracle.connection`** — `user`, `password`, `connectString` (or `connectString1`), optional pool fields
-- **`oracle.libDir`** — Instant Client directory (optional)
-- **`oracle.maxRows`** — default row cap for tools (optional, default `10000`)
-- **`oracle.mcpHttp`** (optional) — HTTP listen options:
-  - **`host`** — default `127.0.0.1` (use `0.0.0.0` only on trusted networks; see security below)
-  - **`port`** — default `3111`
-  - **`path`** — MCP endpoint path, default `/mcp` (with or without leading `/`)
+Две секции верхнего уровня: **`oracle`** (обязательная) и **`mcpHttp`** (опциональная).
 
-## Run the server
+**`mcpHttp`** — параметры HTTP-сервера (все поля опциональны):
 
-**Production-style** (compile then run):
+- **`host`** — по умолчанию `127.0.0.1` (используйте `0.0.0.0` только в доверенных сетях; см. раздел «Безопасность»)
+- **`port`** — по умолчанию `3111`
+- **`path`** — путь MCP-эндпоинта, по умолчанию `/mcp` (с ведущим `/` или без)
+- **`maxRequestBody`** — лимит тела запроса Express (например `"32mb"`), по умолчанию `32mb`
+- **`allowedHosts`** — список разрешённых хостов (защита от DNS-rebinding при привязке к `0.0.0.0`)
+
+**`oracle`**:
+
+- **`connection`** (обязательно) — параметры подключения:
+  - `user`, `password`, `connectString` (или `connectString1`)
+  - `poolMin` (по умолчанию `2`), `poolMax` (по умолчанию `10`), `poolIncrement` (по умолчанию `1`), `poolTimeout` (по умолчанию `60`)
+- **`libDir`** — каталог Instant Client (опционально)
+- **`maxRows`** — лимит строк по умолчанию для инструментов (опционально, по умолчанию `10000`)
+
+## Запуск сервера
+
+**Продакшен-режим** (компиляция и запуск):
 
 ```bash
 cd oracle-mcp
@@ -31,7 +41,7 @@ npm run build
 npm start
 ```
 
-**Development** (TypeScript directly, restarts on `src/**/*.ts` changes — no `build`):
+**Режим разработки** (TypeScript напрямую, перезапуск при изменении `src/**/*.ts` — без `build`):
 
 ```bash
 cd oracle-mcp
@@ -39,38 +49,38 @@ npm install
 npm run dev
 ```
 
-Logs show the listen URL, MCP path, and `/ready` hint.
+В логах отображаются URL прослушивания, путь MCP и подсказка `/ready`.
 
-Stop with **Ctrl+C** (pool and HTTP server are closed).
+Остановка — **Ctrl+C** (пул и HTTP-сервер закрываются).
 
-## Verify the server
+## Проверка сервера
 
-### 1. Process only (no database)
+### 1. Только процесс (без базы данных)
 
 ```bash
 curl -s http://127.0.0.1:3111/health
 ```
 
-Expect: `{"ok":true}` (adjust host/port if you changed `oracle.mcpHttp`).
+Ожидается: `{"ok":true}` (скорректируйте host/port, если меняли `mcpHttp`).
 
-### 2. Database (same path as MCP `execute_sql`)
+### 2. База данных (тот же путь, что и MCP `execute_sql`)
 
-Uses the shared connection pool and `executeStatement` with `SELECT * FROM dual`:
+Использует общий пул соединений и `executeStatement` с `SELECT * FROM dual`:
 
 ```bash
 curl -s -i http://127.0.0.1:3111/ready
 ```
 
 - **200** — `ok`, `query`, `rowCount`, `rows` (JSON-safe)
-- **503** — `ok: false`, `error` (Oracle/network/config issue)
+- **503** — `ok: false`, `error` (проблема Oracle/сети/конфигурации)
 
-This is not the MCP wire format; it proves Oracle is reachable the same way tools do. Full MCP is validated in Cursor (below).
+Это не MCP wire-формат; эндпоинт подтверждает, что Oracle доступен тем же способом, что и инструменты. Полная проверка MCP выполняется в Cursor (ниже).
 
-## Configure Cursor
+## Настройка Cursor
 
-1. **Start** `oracle-mcp` (`npm start`) before using MCP in Cursor.
-2. Open **Cursor Settings → MCP** (or edit **`.cursor/mcp.json`** in the project or user config).
-3. Add a **Streamable HTTP** (or URL-based) server pointing at your MCP endpoint, for example:
+1. **Запустите** `oracle-mcp` (`npm start`) перед использованием MCP в Cursor.
+2. Откройте **Cursor Settings → MCP** (или отредактируйте **`.cursor/mcp.json`** в проекте или пользовательской конфигурации).
+3. Добавьте сервер **Streamable HTTP** (или URL-based), указав ваш MCP-эндпоинт, например:
 
 ```json
 {
@@ -83,27 +93,27 @@ This is not the MCP wire format; it proves Oracle is reachable the same way tool
 }
 ```
 
-If your Cursor version uses a different shape (e.g. only `url` without `type`), use the UI or docs for that build. **No auth** in this setup — omit `headers`.
+Если ваша версия Cursor использует другой формат (например, только `url` без `type`), воспользуйтесь UI или документацией для вашей сборки. **Аутентификация отсутствует** — поле `headers` не указывайте.
 
-4. **Restart Cursor** (or reload MCP) after changing config.
+4. **Перезапустите Cursor** (или перезагрузите MCP) после изменения конфигурации.
 
-## Verify MCP in Cursor
+## Проверка MCP в Cursor
 
-1. MCP panel: server **connected**, tools listed: **`execute_sql`**, **`list_tables`**, **`describe_table`**.
-2. In **Agent** mode (tools enabled), ask explicitly, e.g.:  
-   *Using the Oracle MCP `execute_sql` tool, run `SELECT * FROM dual`.*
+1. Панель MCP: сервер **connected**, инструменты в списке: **`execute_sql`**, **`list_tables`**, **`describe_table`**.
+2. В режиме **Agent** (с включёнными инструментами) запросите явно, например:  
+   *Используя инструмент Oracle MCP `execute_sql`, выполни `SELECT * FROM dual`.*
 
-If the server fails to start, check terminal output, then **`/ready`** and **`/health`**.
+Если сервер не запускается, проверьте вывод терминала, затем **`/ready`** и **`/health`**.
 
-## Security
+## Безопасность
 
-- **No authentication** — dev-only.
-- Binding **`0.0.0.0`** exposes the service on all interfaces; the SDK may log a DNS-rebinding warning. Prefer **`127.0.0.1`** or use a reverse proxy + TLS + auth for anything beyond local dev.
+- **Аутентификация отсутствует** — только для разработки.
+- Привязка к **`0.0.0.0`** открывает сервис на всех интерфейсах; SDK может выдать предупреждение о DNS-rebinding. Предпочтительно использовать **`127.0.0.1`** или настроить reverse proxy + TLS + аутентификацию для всего, что выходит за рамки локальной разработки.
 
-## Scripts
+## Скрипты
 
-| Script        | Description              |
-|---------------|--------------------------|
-| `npm run build` | Compile TypeScript to `dist/` |
-| `npm start`     | Run the HTTP server (`dist/`) |
-| `npm run dev`   | Run `src/index.ts` with hot reload (process restart on save) |
+| Скрипт          | Описание                 |
+|-----------------|--------------------------|
+| `npm run build` | Компиляция TypeScript в `dist/` |
+| `npm start`     | Запуск HTTP-сервера (`dist/`) |
+| `npm run dev`   | Запуск `src/index.ts` с горячей перезагрузкой (перезапуск процесса при сохранении) |

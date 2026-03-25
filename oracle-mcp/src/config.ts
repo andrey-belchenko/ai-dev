@@ -28,16 +28,16 @@ export type OracleMcpConfig = {
 };
 
 type DevConfigJson = {
+  mcpHttp?: {
+    host?: string;
+    port?: number;
+    path?: string;
+    maxRequestBody?: string;
+    allowedHosts?: string[];
+  };
   oracle?: {
     libDir?: string;
     maxRows?: number;
-    mcpHttp?: {
-      host?: string;
-      port?: number;
-      path?: string;
-      maxRequestBody?: string;
-      allowedHosts?: string[];
-    };
     connection?: {
       user?: string;
       password?: string;
@@ -91,7 +91,7 @@ export function loadOracleMcpConfig(
     );
   }
   const libDir = oracle.libDir?.trim() || undefined;
-  const mh = oracle.mcpHttp;
+  const mh = (raw as DevConfigJson).mcpHttp;
 
   const mcpHttp: OracleMcpHttpConfig = {
     host: mh?.host?.trim() || "127.0.0.1",

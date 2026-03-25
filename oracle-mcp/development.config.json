@@ -1,52 +1,11 @@
 {
-    "url": "localhost",
-    "port": 3111,
-    "database": {
-        "host": "asusejs-dev.infoenergo.loc",
-        "port": "5432",
-        "name": "asuse",
-        "password": "kl0pik",
-        "user": "asuse",
-        "pool_max": 15
+    "mcpHttp": {
+        "host": "127.0.0.1",
+        "port": 3111,
+        "path": "/mcp"
     },
-    "mongo": {
-        "uri": "mongodb://root:TS6Q4KsA4NpnhAfY@asusejs-dev.infoenergo.loc:27017",
-        "uri1": "mongodb://localhost:27017",
-        "db": "reports_tmp"
-    },
-    "reports": {
-        "navigatorId": 10,
-        "reportsNet": {
-            "url1": "http://asuse-ai-dev.infoenergo.loc:3122",
-            "url": "http://localhost:5195",
-            "requestTimeoutMs": 3600000
-        }
-    },
-    "migrations": {
-        "devPrefix": "bav_dev_",
-        "target1": {
-            "host": "asuse-ai-main.infoenergo.loc",
-            "port": "5432",
-            "name": "asuse",
-            "password": "kl0pik",
-            "user": "webuser"
-        },
-        "target": {
-            "host": "asusejs-dev.infoenergo.loc",
-            "port": "5432",
-            "name": "asuse",
-            "password": "kl0pik",
-            "user": "asuse"
-        }
-    },
-
     "oracle": {
         "libDir": "C:\\oracle\\instantclient_11_2",
-        "mcpHttp": {
-            "host": "127.0.0.1",
-            "port": 3111,
-            "path": "/mcp"
-        },
         "connection": {
             "user": "asuse",
             "password": "kl0pik",
