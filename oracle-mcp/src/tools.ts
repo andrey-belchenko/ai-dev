@@ -45,7 +45,8 @@ export function registerOracleTools(
     "execute_sql",
     {
       description:
-        "Execute one SQL statement (SELECT, DML, DDL, or PL/SQL). Use a single statement per call. For named binds, use :name in SQL and pass a binds object.",
+        "Execute one SQL statement (SELECT, DML, DDL, or PL/SQL). Use a single statement per call. For named binds, use :name in SQL and pass a binds object. " +
+        "Large scripts are supported: configure oracle.mcpHttp.maxRequestBody (default 32mb) on the server so the JSON body can carry long sql strings.",
       inputSchema: {
         sql: z.string(),
         binds: z

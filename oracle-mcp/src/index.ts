@@ -1,8 +1,8 @@
-import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import type { Request, Response } from "express";
 import { loadOracleMcpConfig } from "./config.js";
+import { createOracleMcpExpressApp } from "./mcp-express-app.js";
 import { createPool, probeOracleDb } from "./oracle.js";
 import {
   formatOracleError,
@@ -28,8 +28,7 @@ async function main(): Promise<void> {
   const pool = await createPool(mcpCfg);
   const { host, port, path: mcpPath } = mcpCfg.mcpHttp;
 
-  const bindAll = host === "0.0.0.0" || host === "::";
-  const app = bindAll ? createMcpExpressApp({ host }) : createMcpExpressApp();
+  const app = createOracleMcpExpressApp(mcpCfg);
 
   app.get("/health", (_req: Request, res: Response) => {
     res.json({ ok: true });

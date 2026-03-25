@@ -8,6 +8,10 @@ export type OracleMcpHttpConfig = {
   host: string;
   port: number;
   path: string;
+  /** Express `express.json` limit (e.g. `32mb`). Default 32mb so large `execute_sql` payloads work. */
+  maxRequestBody: string;
+  /** When binding to all interfaces, optional explicit Host allow list (SDK-style DNS rebinding protection). */
+  allowedHosts: string[] | undefined;
 };
 
 export type OracleMcpConfig = {
@@ -31,6 +35,8 @@ type DevConfigJson = {
       host?: string;
       port?: number;
       path?: string;
+      maxRequestBody?: string;
+      allowedHosts?: string[];
     };
     connection?: {
       user?: string;
@@ -86,6 +92,7 @@ export function loadOracleMcpConfig(
   }
   const libDir = oracle.libDir?.trim() || undefined;
   const mh = oracle.mcpHttp;
+
   const mcpHttp: OracleMcpHttpConfig = {
     host: mh?.host?.trim() || "127.0.0.1",
     port:
@@ -93,6 +100,11 @@ export function loadOracleMcpConfig(
         ? mh.port
         : 3111,
     path: normalizeMcpPath(mh?.path),
+    maxRequestBody: mh?.maxRequestBody?.trim() || "32mb",
+    allowedHosts:
+      mh?.allowedHosts !== undefined && mh.allowedHosts.length > 0
+        ? mh.allowedHosts.map((h) => h.trim()).filter((h) => h.length > 0)
+        : undefined,
   };
   return {
     user: c.user,
